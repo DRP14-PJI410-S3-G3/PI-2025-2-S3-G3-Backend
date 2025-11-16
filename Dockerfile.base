@@ -1,0 +1,27 @@
+FROM php:8.4-fpm-alpine AS php
+
+# Set environment variables
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV PHP_OPCACHE_ENABLE=1
+ENV PHP_OPCACHE_ENABLE_CLI=0
+ENV PHP_OPCACHE_VALIDATE_TIMESTAMPS=0
+ENV PHP_OPCACHE_REVALIDATE_FREQ=0
+
+RUN apk --update add --no-cache unzip libcurl libpq-dev nginx libzip-dev icu-dev oniguruma-dev
+
+# Install dependencies
+RUN apk add --no-cache \
+        redis
+
+#Install intl extension to support many currency formats. Depends on the icu-dev lib to run
+RUN docker-php-ext-configure intl
+RUN docker-php-ext-install intl
+
+#Install another required Laravel PHP Extensions
+RUN docker-php-ext-install pdo_mysql bcmath opcache exif
+
+# Copy composer executable.
+COPY --from=composer:2.8.8 /usr/bin/composer /usr/bin/composer
+# RUN sh -c "wget http://getcomposer.org/composer.phar && chmod a+x composer.phar && mv composer.phar /usr/local/bin/composer"
+
+RUN apk del --no-cache ${PHPIZE_DEPS}
